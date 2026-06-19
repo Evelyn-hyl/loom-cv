@@ -1,0 +1,45 @@
+# Build output
+build/
+out/
+
+# vcpkg installed packages
+engine/vcpkg_installed/
+
+# VS / VSCode
+.vscode/
+*.user
+*.suo
+*.sln.docstates
+*.VC.db
+*.VC.opendb
+
+# MSVC artifacts
+*.obj
+*.pdb
+*.ilk
+*.exp
+*.lib
+*.dll
+*.exe
+
+# CMake
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+install_manifest.txt
+*.cmake
+!CMakeLists.txt
+!CMakePresets.json
+
+# Node / frontend (for when web/ is added)
+node_modules/
+dist/
+.env
+.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Test images (keep structure, ignore contents)
+engine/test/

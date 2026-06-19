@@ -1,0 +1,10 @@
+{
+  "name": "loom-cv",
+  "version": "1.0.0",
+  "dependencies": [
+    "opencv4",
+    "eigen3",
+    "cpp-httplib",
+    "nlohmann-json"
+  ]
+}
