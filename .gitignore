@@ -41,5 +41,8 @@ dist/
 .DS_Store
 Thumbs.db
 
-# Test images (keep structure, ignore contents)
+# Test images
 engine/test/
+
+# CV models
+engine/models/
