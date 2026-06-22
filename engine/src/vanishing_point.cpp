@@ -3,60 +3,63 @@
 #include <cmath>
 #include <random>
 #include <algorithm>
+#include <iostream>
 
 /**
- * Converts Vec4i segment to homogeneous Eigen line vector
+ * Converts line segment to homogeneous Eigen line vector
  * 
- * @param seg
+ * @param line A line segment
  * 
- * @return an Eigen line vector of the segment
+ * @return A homogeneous Eigen line vector of the segment
  */
-Eigen::Vector3d toLine(const cv::Vec4i& seg) {
+Eigen::Vector3d toHomogeneous(const cv::Vec4i& line) {
 
-    double x1 = seg[0], y1 = seg[1];
-    double x2 = seg[2], y2 = seg[3];
-    Eigen::Vector3d line(y1 - y2, -(x1 - x2), x1 * y2 - x2 * y1);
+    double x1 = line[0], y1 = line[1];
+    double x2 = line[2], y2 = line[3];
+    Eigen::Vector3d hom(y1 - y2, -(x1 - x2), x1 * y2 - x2 * y1);
     
-    return line;
+    return hom;
 }
 
 /**
- * Determine if the segment is an inlier of the given vanishing point 
+ * Determine if the line segment is an inlier of the given vanishing point 
  * 
- * @param seg
- * @param vp
- * @param angleThresholdDeg
+ * @param line A line segment
+ * @param vp A vanishing point
+ * @param angleThresholdDeg The maximum angular deviation (in degrees) 
+ * between a line segment's direction and the direction toward the vanishing point
  * 
- * @return bool
+ * @return true if the segment is within angleThresholdDeg of the vanishing point, false otherwise 
  */
-bool isInlier(const cv::Vec4i& seg, cv::Point2d vp, double angleThresholdDeg) {
-    Eigen::Vector2d seg_vector(seg[2] - seg[0], seg[3] - seg[1]);
-    seg_vector.normalize();
+bool isInlier(const cv::Vec4i& line, cv::Point2d vp, double angleThresholdDeg = 5.0) {
+    Eigen::Vector2d line_direction(line[2] - line[0], line[3] - line[1]);
+    line_direction.normalize();
 
-    cv::Point2d seg_midpoint((seg[0] + seg[2]) / 2.0, (seg[1] + seg[3]) / 2.0);
+    cv::Point2d line_midpoint((line[0] + line[2]) / 2.0, (line[1] + line[3]) / 2.0);
     
-    Eigen::Vector2d mid_to_vp_vector(vp.x - seg_midpoint.x, vp.y - seg_midpoint.y);
-    mid_to_vp_vector.normalize();
+    Eigen::Vector2d mid_to_vp_direction(vp.x - line_midpoint.x, vp.y - line_midpoint.y);
+    mid_to_vp_direction.normalize();
 
-    double angle_deg = std::acos(std::abs(seg_vector.dot(mid_to_vp_vector))) * (180.0 / CV_PI);
+    double angle_deg = std::acos(std::abs(line_direction.dot(mid_to_vp_direction))) * (180.0 / CV_PI);
     
     return angle_deg <= angleThresholdDeg;
 }
 
 /**
- * Counts the number of inlier segments a vanishing point has
+ * Counts the number of inlier line segments a vanishing point has
  * 
- * @param segs
- * @param vp
- * @param angleThresholdDeg
+ * @param lines An array of line segments
+ * @param vp A vanishing point
+ * @param angleThresholdDeg The maximum angular deviation (in degrees) 
+ * between a line segment's direction and the direction toward the vanishing point
  * 
- * @return number of inlier segments of a vanishing point
+ * @return number of inlier line segments of a vanishing point
  */
-int countInliers(const std::vector<cv::Vec4i>& segs, cv::Point2d vp, double angleThresholdDeg) {
+int countInliers(const std::vector<cv::Vec4i>& lines, cv::Point2d vp, double angleThresholdDeg = 5.0) {
     int count = 0;
 
-    for (auto seg : segs) {
-        if (isInlier(seg, vp, angleThresholdDeg)) {
+    for (const auto& line : lines) {
+        if (isInlier(line, vp, angleThresholdDeg)) {
             count++;
         }
     }
@@ -66,8 +69,6 @@ int countInliers(const std::vector<cv::Vec4i>& segs, cv::Point2d vp, double angl
 
 std::vector<cv::Point2d> detectVanishingPoints(const std::vector<cv::Vec4i>& lines) {
     std::mt19937 rng(42);
-
-    const double ANGLE_THRESHOLD_DEG = 5.0;
 
     std::vector<cv::Point2d> vanishingPoints;
     std::vector<cv::Vec4i> remaining(lines);
@@ -89,8 +90,8 @@ std::vector<cv::Point2d> detectVanishingPoints(const std::vector<cv::Vec4i>& lin
         for (int iter = 0; iter < ITERATIONS; iter++) {
             int index1 = distrib(rng), index2 = distrib(rng);
 
-            Eigen::Vector3d line1 = toLine(remaining[index1]);
-            Eigen::Vector3d line2 = toLine(remaining[index2]);
+            Eigen::Vector3d line1 = toHomogeneous(remaining[index1]);
+            Eigen::Vector3d line2 = toHomogeneous(remaining[index2]);
 
             Eigen::Vector3d cross_product = line1.cross(line2);
 
@@ -102,7 +103,7 @@ std::vector<cv::Point2d> detectVanishingPoints(const std::vector<cv::Vec4i>& lin
             // Convert vp homogeneous point (x, y, w) to a 2D point (x/w, y/w)
             cv::Point2d vp(cross_product[0] / cross_product[2], cross_product[1] / cross_product[2]);
 
-            int inliers = countInliers(remaining, vp, ANGLE_THRESHOLD_DEG);
+            int inliers = countInliers(remaining, vp);
             
             if (inliers > best_vp_inlier_count) {
                 best_vp = vp;
@@ -110,8 +111,8 @@ std::vector<cv::Point2d> detectVanishingPoints(const std::vector<cv::Vec4i>& lin
             }
         }
 
-        // Note: MIN_INLIERS and divided by 4 are arbitrary thresholds
-        int min_inlier = std::max(MIN_INLIERS, (int)(remaining.size() / 4));
+        // Note: MIN_INLIERS and divided by 20 are arbitrary thresholds
+        int min_inlier = std::max(MIN_INLIERS, (int)(remaining.size() / 20));
         
         if (best_vp_inlier_count > min_inlier) {
             vanishingPoints.push_back(best_vp);
@@ -119,11 +120,21 @@ std::vector<cv::Point2d> detectVanishingPoints(const std::vector<cv::Vec4i>& lin
 
         // Cleanup
         remaining.erase(
-            std::remove_if(remaining.begin(), remaining.end(), [&](const cv::Vec4i& seg) {
-                return isInlier(seg, best_vp, ANGLE_THRESHOLD_DEG);
+            std::remove_if(remaining.begin(), remaining.end(), [&](const cv::Vec4i& line) {
+                return isInlier(line, best_vp);
             }), remaining.end()
         );
     }
 
     return vanishingPoints;
+}
+
+std::vector<cv::Vec4i> getInlierLines(const std::vector<cv::Vec4i>& lines, cv::Point2d vp, double angleThresholdDeg) {
+    std::vector<cv::Vec4i> vpInliers;
+
+    std::copy_if(lines.begin(), lines.end(), std::back_inserter(vpInliers), [&](const cv::Vec4i& line) {
+            return isInlier(line, vp);
+    });
+
+    return vpInliers;
 }

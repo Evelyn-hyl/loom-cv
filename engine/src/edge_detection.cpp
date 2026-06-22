@@ -2,48 +2,43 @@
 #include <opencv2/imgproc.hpp>
 #include <iostream>
 
-/**
- * @brief [brief description]
- * 
- * [description]
- * 
- * @param image
- * @param lowThreshold
- * @param highThreshold
- * @param isALineThreshold
- * @param minLineLength
- * @param maxLineGap
- * 
- * 
- * @return an array of line segments
- */
-std::vector<cv::Vec4i> detectLines(
-    const cv::Mat& image, 
-    double lowThreshold, 
-    double highThreshold, 
-    int isALineThreshold, 
-    double minLineLength, 
-    double maxLineGap) {
+std::vector<cv::Vec4i> detectLines(const cv::Mat& image) {
     if (image.empty()) {
-        std::cout << "Could not open or find the image!" << "\n";
+        std::cerr << "Could not open or find the image!" << "\n";
         return {};
     }
 
-    const double RHO = 1.0;
-    const double THETA = CV_PI/180;
+    cv::Ptr<cv::LineSegmentDetector> lsd = cv::createLineSegmentDetector(cv::LSD_REFINE_STD, 0.8, 0.6, 2.0, 30.0, 0.0, 0.5);
+    cv::Mat gray;
+    std::vector<cv::Vec4f> lines_f;
+    std::vector<cv::Vec4i> lines_i;
 
-    cv::Mat gray, blurred, edges;
-    std::vector<cv::Vec4i> lines;
-
-    // Stage #1: Canny — Make edges findable
     cv::cvtColor(image, gray, cv::COLOR_BGR2GRAY);
 
-    cv::GaussianBlur(gray, blurred, cv::Size(5,5), 0);
+    lsd->detect(gray, lines_f);
+    
+    for (auto line : lines_f) {
+        lines_i.push_back(cv::Vec4i(
+            (int)line[0], (int)line[1], (int)line[2], (int)line[3]
+        ));
+    }
+    return lines_i;
+}
 
-    cv::Canny(blurred, edges, lowThreshold, highThreshold);
+std::vector<cv::Vec4i> filterDiagonalLines(const std::vector<cv::Vec4i>& lines, double angleThresholdDeg) {
+    std::vector<cv::Vec4i> diagonalLines;
 
-    // Stage #2: Hough — Extract array of line segments
-    cv::HoughLinesP(edges, lines, RHO, THETA, isALineThreshold, minLineLength, maxLineGap);
+    for (const auto& line : lines) {
+        double angle_deg = std::abs(
+            std::atan2((line[3] - line[1]), (line[2] - line[0])) * 180 / CV_PI
+        );
 
-    return lines;
+        if (angle_deg > angleThresholdDeg && angle_deg < 90 - angleThresholdDeg || 
+            angle_deg > 90 + angleThresholdDeg && angle_deg < 180 - angleThresholdDeg
+        ) {
+            diagonalLines.push_back(line);
+        }
+    }
+
+    return diagonalLines;
 }
