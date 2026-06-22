@@ -26,7 +26,7 @@ std::vector<cv::Vec4i> detectLines(const cv::Mat& image) {
 }
 
 std::vector<cv::Vec4i> filterDiagonalLines(const std::vector<cv::Vec4i>& lines, double angleThresholdDeg) {
-    std::vector<cv::Vec4i> diagonalLines;
+    std::vector<cv::Vec4i> diagonal_lines;
 
     for (const auto& line : lines) {
         double angle_deg = std::abs(
@@ -36,9 +36,9 @@ std::vector<cv::Vec4i> filterDiagonalLines(const std::vector<cv::Vec4i>& lines, 
         if (angle_deg > angleThresholdDeg && angle_deg < 90 - angleThresholdDeg || 
             angle_deg > 90 + angleThresholdDeg && angle_deg < 180 - angleThresholdDeg
         ) {
-            diagonalLines.push_back(line);
+            diagonal_lines.push_back(line);
         }
     }
 
-    return diagonalLines;
+    return diagonal_lines;
 }

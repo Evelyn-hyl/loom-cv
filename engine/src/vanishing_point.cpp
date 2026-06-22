@@ -70,7 +70,7 @@ int countInliers(const std::vector<cv::Vec4i>& lines, cv::Point2d vp, double ang
 std::vector<cv::Point2d> detectVanishingPoints(const std::vector<cv::Vec4i>& lines) {
     std::mt19937 rng(42);
 
-    std::vector<cv::Point2d> vanishingPoints;
+    std::vector<cv::Point2d> vanishing_points;
     std::vector<cv::Vec4i> remaining(lines);
 
     // TODO: Update to add a third vp to detect 3-point perspective compositions
@@ -115,7 +115,7 @@ std::vector<cv::Point2d> detectVanishingPoints(const std::vector<cv::Vec4i>& lin
         int min_inlier = std::max(MIN_INLIERS, (int)(remaining.size() / 20));
         
         if (best_vp_inlier_count > min_inlier) {
-            vanishingPoints.push_back(best_vp);
+            vanishing_points.push_back(best_vp);
         }
 
         // Cleanup
@@ -126,15 +126,15 @@ std::vector<cv::Point2d> detectVanishingPoints(const std::vector<cv::Vec4i>& lin
         );
     }
 
-    return vanishingPoints;
+    return vanishing_points;
 }
 
 std::vector<cv::Vec4i> getInlierLines(const std::vector<cv::Vec4i>& lines, cv::Point2d vp, double angleThresholdDeg) {
-    std::vector<cv::Vec4i> vpInliers;
+    std::vector<cv::Vec4i> vp_inliers;
 
-    std::copy_if(lines.begin(), lines.end(), std::back_inserter(vpInliers), [&](const cv::Vec4i& line) {
+    std::copy_if(lines.begin(), lines.end(), std::back_inserter(vp_inliers), [&](const cv::Vec4i& line) {
             return isInlier(line, vp);
     });
 
-    return vpInliers;
+    return vp_inliers;
 }
