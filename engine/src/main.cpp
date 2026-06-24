@@ -96,16 +96,19 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    for (int i = 0; i < 17; i++) {
-        cv::Scalar color(255, 0, 0);
-
-        cv::circle(result, cv::Point(pose.keypoints[i].x, pose.keypoints[i].y), 5, color, -1);
-        
+    for (int i = 0; i < 17; i++) {        
         pose_estimate[keypoint_keys[i]] = {
             {"x", pose.keypoints[i].x},
             {"y", pose.keypoints[i].y},
             {"confidence", pose.keypoints[i].confidence}
         };
+    }
+    
+    for (const auto& [a, b] : skeleton) {
+        cv::line(result,
+            cv::Point(pose.keypoints[a].x, pose.keypoints[a].y),
+            cv::Point(pose.keypoints[b].x, pose.keypoints[b].y),
+            cv::Scalar(0, 255, 255), 2);
     }
 
     nlohmann::json output;
