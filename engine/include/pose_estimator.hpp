@@ -2,11 +2,19 @@
 #pragma once
 #include <array>
 #include <opencv2/core.hpp>
+#include <onnxruntime_cxx_api.h>
 
 struct Keypoint {
     double x;
     double y;
     double confidence;
+};
+
+struct FigureBoundingBox {
+    double x;
+    double y;
+    double width;
+    double height;
 };
 
 enum PoseEstimateIndex {
@@ -63,6 +71,7 @@ inline const std::vector<std::pair<int, int>> skeleton = {
 
 struct PoseEstimate {
     std::array<Keypoint, 17> keypoints;
+    FigureBoundingBox figure_bounding_box;
 };
 
 /**
@@ -74,4 +83,4 @@ struct PoseEstimate {
  * 
  * @return A PoseEstimate object with 17 keypoints in original image coordinates
  */
-PoseEstimate detectSinglePose(const cv::Mat& image, const std::string& modelPath);
+PoseEstimate detectSinglePose(const cv::Mat& image, Ort::Session& session);

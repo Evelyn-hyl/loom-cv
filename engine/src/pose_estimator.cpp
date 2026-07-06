@@ -1,12 +1,10 @@
 #include "../include/pose_estimator.hpp"
-#include <iostream>
 #include <opencv2/imgproc.hpp>
 #include <array>
 #include <filesystem>
 #include <onnxruntime_cxx_api.h>
-#include <opencv2/imgcodecs.hpp>
 
-PoseEstimate detectSinglePose(const cv::Mat& image, const std::string& modelPath) {
+PoseEstimate detectSinglePose(const cv::Mat& image, Ort::Session& session) {
     const int IMAGE_SIZE = 640;
     const double SCALE = std::min((double)IMAGE_SIZE / image.cols, (double)IMAGE_SIZE / image.rows);
 
@@ -51,11 +49,6 @@ PoseEstimate detectSinglePose(const cv::Mat& image, const std::string& modelPath
         input_shape.size()
     );
 
-    std::wstring wpath(modelPath.begin(), modelPath.end());
-
-    static Ort::Env env(ORT_LOGGING_LEVEL_WARNING, "pose");
-    static Ort::Session session(env, wpath.c_str(), Ort::SessionOptions{});
-
     const char* input_names[] = {"images"};
     const char* output_names[] = {"output0"};
 
@@ -70,12 +63,20 @@ PoseEstimate detectSinglePose(const cv::Mat& image, const std::string& modelPath
     int best = 0;
 
     for (int j = 0; j < 8400; j++) {
-        if(output_data[4 * 8400 + j] > output_data[4 * 8400 + best]) {
+        if (output_data[4 * 8400 + j] > output_data[4 * 8400 + best]) {
             best = j;
         }
     }
 
-    for (int k = 0;k < 17; k++) {
+    pose_estimate.figure_bounding_box.x = (output_data[0 * 8400 + best] - offset_x) / SCALE;
+    pose_estimate.figure_bounding_box.y = (output_data[1 * 8400 + best] - offset_y) / SCALE;
+    pose_estimate.figure_bounding_box.width = output_data[2 * 8400 + best] / SCALE;
+    pose_estimate.figure_bounding_box.height = output_data[3 * 8400 + best] / SCALE;
+
+    for (int k = 0; k < 17; k++) {
+        // Keypoints start on index 5
+        // Column-major: there are 8400 columns of candidate detections, 
+        // each row from row 5, in groups of 3, represents a keypoint of the 17 keypoints
         int x_index = (k * 3 + 5) * 8400 + best, 
             y_index = (k * 3 + 6) * 8400 + best;
         double keypoint_x = output_data[x_index], keypoint_y = output_data[y_index];

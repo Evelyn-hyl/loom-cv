@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.15)
 project(PerspectiveSensei VERSION 1.0)
 
-set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(ONNXRUNTIME_ROOT "C:/onnxruntime/onnxruntime-win-x64-1.27.0")
@@ -21,6 +21,8 @@ add_executable(engine
     src/edge_detection.cpp
     src/vanishing_point.cpp
     src/pose_estimator.cpp
+    src/body_segmentor.cpp
+    src/silhouette_extractor.cpp
 )
 
 target_link_libraries(engine PRIVATE 
