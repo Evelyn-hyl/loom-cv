@@ -161,10 +161,12 @@ int main(int argc, char* argv[]) {
     cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE, cv::Size(20, 20));
     cv::morphologyEx(silhouette_mask, silhouette_mask, cv::MORPH_DILATE, kernel);
 
+    // [ Debug ]
     cv::Mat debug_dilated;
     person_crop.copyTo(debug_dilated, silhouette_mask);
 
     cv::imwrite("debug_silhouette_dilated.jpg", debug_dilated);
+    // [ Debug ]
 
     try {
         detectBodySegments(person_crop, seg_session, silhouette_mask);

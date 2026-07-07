@@ -79,7 +79,7 @@ struct PoseEstimate {
  * Uses YOLOv8s-pose; returns the highest-confidence detection.
  * 
  * @param image A BGR color image
- * @param modelPath File path to the YOLOv8s-pose ONNX model
+ * @param session The inference session
  * 
  * @return A PoseEstimate object with 17 keypoints in original image coordinates
  */

@@ -42,4 +42,14 @@ struct BodySegmentation {
     std::array<BodyPartContour, 28> parts;
 };
 
+/**
+ * Detects body part segments of one human figure in the image.
+ * Uses Sapiens body part segmentation model; classifies each pixel as one of 28 body part categories.
+ * 
+ * @param image An image containing a human figure
+ * @param session The inference session
+ * @param silhouette A binary mask of the human figure's silhouette
+ * 
+ * @return The data of each detected body part segment
+ */
 BodySegmentation detectBodySegments(const cv::Mat& image, Ort::Session& session, cv::Mat silhouette);

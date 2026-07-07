@@ -127,7 +127,7 @@ BodySegmentation detectBodySegments(const cv::Mat& image, Ort::Session& session,
 
     mask.setTo(0, silhouette_letterbox == 0);
 
-    // [ Debug Start ]
+    // [ Debug ]
     cv::Mat color_mask(mask.size(), CV_8UC3, cv::Scalar(0, 0, 0));
     static const cv::Vec3b COLORS[28] = {
         {0,0,0},       // background
@@ -163,7 +163,7 @@ BodySegmentation detectBodySegments(const cv::Mat& image, Ort::Session& session,
         for (int x = 0; x < mask.cols; x++)
             color_mask.at<cv::Vec3b>(y, x) = COLORS[mask.at<uchar>(y, x)];
     cv::imwrite("debug_segmentation.jpg", color_mask);
-    // [ Debug End ]
+    // [ Debug ]
 
     return body_segment;
 }

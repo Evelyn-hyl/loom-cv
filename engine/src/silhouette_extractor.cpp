@@ -89,10 +89,12 @@ cv::Mat extractSingleSilhouette(const cv::Mat& croppedImage, Ort::Session& sessi
 
     bgra_channels.push_back(debug_alpha_resized);
 
+    // [ Debug ]
     cv::Mat debug_rgba;
     cv::merge(bgra_channels, debug_rgba);
 
     cv::imwrite("debug_silhouette_rgba.png", debug_rgba);
+    // [ Debug ]
 
     cv::Mat mat_8u;
     raw_mat.convertTo(mat_8u, CV_8UC1, 255.0);
